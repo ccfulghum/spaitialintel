@@ -99,7 +99,7 @@
         .hero-section {
             margin-top: 70px;
             height: 60vh;       
-			background-image: url("/images/hosp.png");
+			background-image: url("../images/hosp.png");
             background-size: cover;
             background-position: center;
             position: relative;
