@@ -97,17 +97,18 @@
         }
         
         .hero-section {
-            margin-top: 70px;
-            height: 60vh;       
-			background-image: url("images/hosp.png");
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
-            padding: 40px 50px;
+        margin-top: 70px;
+        height: 60vh;
+        background-image: url("images/hosp.png");
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 40px 50px;
         }
+
         
         .hero-section::before {
             content: '';
