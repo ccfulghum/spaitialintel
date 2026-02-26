@@ -82,7 +82,7 @@ nav a:hover {
 .hero {
     margin-top: 60px;
     /* background: linear-gradient(135deg, #0b4f3a 0%, #0d6e52 50%, #1a8a68 100%); */
-    background-image: url('wb_screenshot.jpg');
+    background-image: url('wb_screenshot.png');
     background-size: cover;        /* fills the full section */
     background-position: center;   /* centers the image */
     background-repeat: no-repeat;
