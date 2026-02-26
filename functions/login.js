@@ -4,10 +4,10 @@ export async function onRequestPost(context) {
   const body = await request.json();
   const { username, password } = body;
 
-  const VALID_USER = env.DEMO_USERNAME;
-  const VALID_PASS = env.DEMO_PASSWORD;
-
-  if (username === VALID_USER && password === VALID_PASS) {
+  if (
+    username === env.DEMO_USERNAME &&
+    password === env.DEMO_PASSWORD
+  ) {
     return new Response(JSON.stringify({ success: true }), {
       headers: { "Content-Type": "application/json" }
     });
