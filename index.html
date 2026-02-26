@@ -6,6 +6,52 @@
     <title>HealthDemographics+ | AI-Powered Healthcare Market Intelligence</title>
     <link rel="stylesheet" href="/style.css">
 </head>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginModal" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.65); z-index:9999; align-items:center;
+     justify-content:center;">
+  <div style="background:#fff; padding:40px; border-radius:12px;
+       width:320px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <h3 style="margin-bottom:20px; color:#0b3d2d;">Demo Access</h3>
+    <input id="demoUser" type="text" placeholder="Username"
+           style="width:100%;padding:10px;margin-bottom:12px;
+           border:1px solid #ccc;border-radius:6px;font-size:14px;">
+    <input id="demoPass" type="password" placeholder="Password"
+           style="width:100%;padding:10px;margin-bottom:12px;
+           border:1px solid #ccc;border-radius:6px;font-size:14px;">
+    <div id="loginErr" style="color:red;font-size:13px;
+         margin-bottom:10px;display:none;">
+      Invalid logon. Returning to main page...
+    </div>
+    <button onclick="checkLogin()"
+            style="width:100%;padding:12px;background:#0b4f3a;color:white;
+            border:none;border-radius:8px;font-weight:700;
+            cursor:pointer;font-size:15px;">Login</button>
+    <button onclick="closeModal()"
+            style="width:100%;padding:10px;margin-top:10px;background:transparent;
+            border:1px solid #ccc;border-radius:8px;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+
+<script>
+  function openLoginModal() {
+    const m = document.getElementById('loginModal');
+    m.style.display = 'flex';
+  }
+  function closeModal() {
+    const m = document.getElementById('loginModal');
+    m.style.display = 'none';
+    document.getElementById('loginErr').style.display = 'none';
+    document.getElementById('demoUser').value = '';
+    document.getElementById('demoPass').value = '';
+  }
+  
+</script>
+
+
+
 <body>
 
 <!-- ── Header ── -->
@@ -16,9 +62,20 @@
         <a href="#reports">Reports</a>
         <a href="#pricing">Pricing</a>
         <a href="#testimonials">Clients</a>
-        <a href="#pricing" class="nav-cta">Get a Report</a>
+        <a href="images/demographic-market-report-sample.pdf" target="_blank">Sample Reports</a>
     </nav>
 </header>
+
+<!-- Login Modal -->
+<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+  <div style="background:white; padding:30px; border-radius:8px; width:300px;">
+    <h3>Login Required</h3>
+    <input id="username" type="text" placeholder="Username" style="width:100%; margin-bottom:10px;">
+    <input id="password" type="password" placeholder="Password" style="width:100%; margin-bottom:10px;">
+    <button id="runReportBtn">Run Report</button>
+    <p id="loginError" style="color:red; display:none;">Invalid credentials</p>
+  </div>
+</div>
 
 <!-- ── Hero ── -->
 <section class="hero">

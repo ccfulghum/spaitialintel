@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="./">
+    <meta charset="UTF-8">
+    <title>Spaitial Intel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 1. Turf.js FIRST -->
+    <script src='https://unpkg.com/@turf/turf@7/turf.min.js'></script>
+        <script>
+        // Wait for config to be available
+        window.addEventListener('DOMContentLoaded', () => {
+            const s = document.createElement("script");
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+            s.async = true;
+            s.defer = true;
+            document.head.appendChild(s);
+        });
+    </script>
+    
+    <!-- 2. Other libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+
+/* =====================
+   GLOBAL
+===================== */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+}
+
+/* =====================
+   HEADER
+===================== */
+ .ai-box {
+            border: 2px solid currentColor;
+            padding: 2px 6px;
+            display: inline-block;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+header {
+    height: 60px;
+    background: #1f2933;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    justify-content: space-between;
+}
+
+header .logo {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+header .login-btn {
+    background: #f4a261;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+
+/* =====================
+   LAYOUT
+===================== */
+.app-container {
+    display: flex;
+    height: calc(100dvh - 60px);
+}
+
+
+/* =====================
+   LEFT TOOLBAR
+===================== */
+.controls {
+    width: 375px;
+    background: #ffffff;
+    font-size: 16px;
+    border-right: 1px solid #ddd;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.controls h3 {
+    margin-top: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: #1f2933;
+    letter-spacing: -0.5px;
+}
+
+.controls button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: none;
+    background: #007bff;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.controls button.secondary {
+    background: #6c757d;
+}
+
+#status {
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+/* =====================
+   COLLAPSIBLE SECTIONS
+===================== */
+details {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+details summary {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f2933;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+details summary:hover {
+    background: #e9ecef;
+}
+
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details summary::before {
+    content: '▶';
+    margin-right: 10px;
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+
+details[open] summary::before {
+    transform: rotate(90deg);
+}
+
+details .section-content {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #ddd;
+}
+
+/* =====================
+   RADIUS SLIDERS
+===================== */
+.slider-container {
+    margin: 15px 0;
+}
+
+.slider-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.slider-label span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.slider-value-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.slider-value {
+    font-weight: bold;
+    color: #007bff;
+    min-width: 60px;
+    text-align: right;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e9ecef;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* =====================
+   MAP
+===================== */
+.map-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+/* =====================
+   DEMOGRAPHICS PANEL
+===================== */
+#demographics-panel {
+    display: none;
+    background: #ffffff;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+}
+
+#demographics-panel.active {
+    display: block;
+}
+
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-run-report {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-run-report:hover {
+    background: #0056b3;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.tab.active {
+    border-bottom: 2px solid #f4a261;
+    color: #f4a261;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* =====================
+   DEMO STAT ROWS
+===================== */
+.stat-row {
+    display: flex;
+    gap: 10px;
+    margin: 6px 0;
+}
+
+
+.stat-value.large {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.three-column-layout {
+    display: flex;
+    gap: 0;
+}
+
+.demo-column {
+    flex: 1;
+    padding: 20px;
+}
+
+.demo-column.white { background: #ffffff; }
+.demo-column.light-gray { background: #f5f5f5; }
+.demo-column.light-blue { background: #e3f2fd; }
+
+.dummy-chart {
+    height: 200px;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px;
+}
+
+.bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+}
+
+/* =====================
+   REPORT MODAL
+===================== */
+#report-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+#report-content {
+    max-width: 800px;
+    margin: 40px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.report-header {
+    text-align: center;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.report-header h1 {
+    color: #1f2933;
+    margin: 0 0 10px 0;
+}
+
+.report-header h2 {
+    color: #666;
+    font-weight: normal;
+    margin: 10px 0;
+}
+
+.report-section {
+    margin: 30px 0;
+}
+
+.report-section h3 {
+    color: #007bff;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.report-table td:first-child {
+    font-weight: 600;
+    width: 60%;
+}
+
+.report-table td:last-child {
+    text-align: right;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.close-report {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.close-report:hover {
+    background: #c82333;
+}
+
+#download-btn {
+    width: 100%;
+    padding: 15px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#download-btn:hover {
+    background: #218838;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="hero-section">
+        <h1>Sp<span class="ai-box">AI</span>tial Intel</h1>
+    </div>
+    <button class="login-btn">Log In</button>
+</header>
+
+<div class="app-container">
+
+    <!-- LEFT TOOLBAR -->
+    <div class="controls">
+   
+    <!-- SEARCH LOCATION -->
+    <div style="margin-bottom: 20px;">
+        <h3 style="margin-bottom: 10px;">Search Location</h3>
+        <input id="addressInput" type="text" value="1805 Carleton Ave, Fort Worth, TX, USA"  
+               style="width: 90%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+        <button id="goButton" style="width: 95%; padding: 10px; background: #007bff; 
+                color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Go to Address
+        </button>
+    </div>
+<!-- Eplaceholder="Enter address..."  move to value above-->
+    <!-- HEALTHCARE TOOLS -->
+<!-- COLLAPSIBLE GEOGRAPHY SECTION -->
+    <details style="margin-top: 20px;">
+    <summary>Healthcare Tools</summary>
+    <div>
+        <input type="checkbox" id="urgentCareCheckbox" onchange="handleUrgentCareToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Urgent Cares</span>
+    </div> 
+    <div> 
+        <input type="checkbox" id="HospitalCheckbox" onchange="handleHospitalToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Hospitals</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="DermCheckbox" onchange="handleDermToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Dermatologist</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="AutismCheckbox" onchange="handleAutismToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Autism Centers</span>
+    </div>
+ </details>
+    
+<!-- COLLAPSIBLE PHYSICIAN SECTION -->
+    <details style="margin-top: 20px;">
+    <summary>Physician By Speciality</summary>
+    <div>
+        <input type="checkbox" id="DermatologyCheckbox" onchange="handleDermatologyToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Dermatologist</span>
+    </div> 
+    <div> 
+        <input type="checkbox" id="CardiologyCheckbox" onchange="handleCardiologyToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Cardiologist</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="UrologyCheckbox" onchange="handleUrologyToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Endocrinologist (Diabetes)</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="PlasticSurgeryheckbox" onchange="handlePlasticSurgeryToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Plastic Surgery</span>
+    </div>
+ </details>
+
+    <!-- COLLAPSIBLE GEOGRAPHY SECTION -->
+    <details style="margin-top: 20px;">
+        <summary>Trade Area</summary>
+        <div class="section-content">
+            <!-- Radius 1 Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Radius 1</span>
+                    <div class="slider-value-display">
+                        <div class="color-dot" style="background-color: #FF6B6B;"></div>
+                        <span class="slider-value" id="radius1-value">1 mi</span>
+                    </div>
+                </div>
+                <input type="range" id="radius1" min="0" max="30" value="1" 
+                       oninput="updateRadiusValue(1, this.value)">
+            </div>
+
+            <!-- Radius 2 Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Radius 2</span>
+                    <div class="slider-value-display">
+                        <div class="color-dot" style="background-color: #4ECDC4;"></div>
+                        <span class="slider-value" id="radius2-value">3 mi</span>
+                    </div>
+                </div>
+                <input type="range" id="radius2" min="0" max="30" value="3" 
+                       oninput="updateRadiusValue(2, this.value)">
+            </div>
+
+            <!-- Radius 3 Slider -->
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Radius 3</span>
+                    <div class="slider-value-display">
+                        <div class="color-dot" style="background-color: #95E1D3;"></div>
+                        <span class="slider-value" id="radius3-value">5 mi</span>
+                    </div>
+                </div>
+                <input type="range" id="radius3" min="0" max="30" value="5" 
+                       oninput="updateRadiusValue(3, this.value)">
+            </div>
+        </div>
+    </details>
+
+
+
+    
+    <!-- COLLAPSIBLE LAYER SECTION -->
+    <details style="margin-top: 20px;">
+    <summary>Layers</summary>
+    <div>
+        <input type="checkbox" id="zipcodeCheckbox" onchange="handleZipCodeToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Zip Codes</span>
+    </div> 
+    <div> 
+        <input type="checkbox" id="HospitalCheckbox" onchange="handleHospitalToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">Block Groups</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="DermCheckbox" onchange="handleDermToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">County</span>
+    </div>
+    <div> 
+        <input type="checkbox" id="AutismCheckbox" onchange="handleAutismToggle()" 
+               style="width: 16px; height: 16px; margin-right: 8px; cursor: pointer;">
+        <span style="font-size: 14px;">City</span>
+    </div>
+ </details>
+
+    <!-- COLLAPSIBLE AI ASSISTANT -->
+    <details style="margin-top: 20px;">
+        <summary>AI Assistant</summary>
+        <div class="section-content">
+            <div id="chat-messages" style="height: 200px; width: 100%; overflow-y: auto; background: #f9f9f9; 
+                 padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 13px;">
+                <div style="color: #666;">Ask me anything about this location...</div>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <input id="chat-input" type="text" placeholder="Type message..." 
+                       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                <button onclick="sendChatMessage()" style="padding: 8px 15px; background: #007bff; 
+                        color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
+            </div>
+        </div>
+    </details>
+
+    </div>
+
+<!-- MAP + PANEL -->
+<div class="map-container">
+    <div id="map"></div>
+
+    <!-- DEMOGRAPHICS PANEL -->
+    <div id="demographics-panel">
+        <div class="panel-header">
+            <strong>5-MILE RADIUS DEMOGRAPHICS</strong>
+            <div class="header-buttons">
+            <button class="btn-run-report" onclick="runReport()">Run Report</button>
+            <button class="btn-close" onclick="closeDemographicsPanel()">×</button>
+        </div>
+     </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event,'demographics')">Snapshot</button>
+            <button class="tab" onclick="switchTab(event,'trends')">Trends</button>
+        </div>
+
+<div id="demographics-tab" class="tab-content active">
+    <div class="three-column-layout">
+        <!-- Left: Population Data -->
+        <div class="demo-column light-gray">
+            <h4>Population Stats</h4>
+            <div class="stat-value large" id="pop-total">—</div>
+            <div>Total Population (5 mi)</div>
+            <div class="stat-row"><span>Households: </span><span id="hh-total">—</span></div>
+            <div class="stat-row"><span>Families: </span><span id="fam-total">—</span></div>
+            <div class="stat-row"><span>ZIP Code: </span><span id="zip-code">—</span></div>
+        </div>
+
+        <!-- Middle: Chart -->
+        <div class="demo-column white" >
+            <h4>Demand Potential</h4>
+            <div class="dummy-chart">
+                <div class="bar" style="height: 60%; background: #4CAF50;"></div>
+                <div class="bar" style="height: 80%; background: #2196F3;"></div>
+                <div class="bar" style="height: 45%; background: #FF9800;"></div>
+                <div class="bar" style="height: 70%; background: #9C27B0;"></div>
+            </div>
+            <div style="text-align: center; margin-top: 10px; font-size: 12px;">
+                18-34 | 35-54 | 55-64 | 65+
+            </div>
+        </div>
+
+        <!-- Right: Future Trends -->
+        <div class="demo-column light-blue">
+            <h4>Future Outlook</h4>
+            <p><strong>Population Growth:</strong> Expected 8-12% increase over next 5 years.</p>
+            <p><strong>Age Shift:</strong> Growing millennial population moving into area.</p>
+            <p><strong>Economic Trend:</strong> Median income rising 4% annually.</p>
+        </div>
+    </div>
+</div>
+        <div id="trends-tab" class="tab-content">
+            <div class="stat-row"><span>Population Growth (5-yr)</span><span id="pop-growth">—</span></div>
+        </div>
+    </div>
+</div>
+
+<div id="status"></div>
+
+<script>
+
+/* =====================
+  GLOBAL VARIABLES
+===================== */
+let map;
+let urgentCareMarkers = [];
+let radiusCircles = [];
+let activeInfoWindow = null;
+let addressMarker = null; 
+
+
+
+/* =====================
+   MAP INIT
+===================== */
+/* =====================
+   MAP INIT
+===================== */
+function initMap() {
+    // Check CONFIG after it's loaded
+    if (!CONFIG?.CENSUS_API_KEY) {
+        console.error("CENSUS_API_KEY missing from config.js");
+    }
+    
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 32.8286, lng: -96.7 },
+        zoom: 13,
+        minZoom: 10,
+        streetViewControl: false
+    });
+
+
+
+    // Add autocomplete
+    const input = document.getElementById('addressInput');
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.bindTo('bounds', map);
+
+    // Add the listener immediately:
+    autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    
+    if (!place.geometry) {
+        alert('Please select an address from the dropdown');
+        return;
+    }
+    
+    // Process the place data
+    map.setCenter(place.geometry.location);
+    map.setZoom(15);
+});
+
+// Update the goToAddress function in initMap()
+    const goToAddress = () => {
+    const place = autocomplete.getPlace();
+
+        // Add this check
+    if (!place || !place.geometry) {
+        console.error('No place data or geometry found');
+        return;
+    }
+
+    if (place.geometry) {
+        map.setCenter(place.geometry.location);
+        map.setZoom(15);
+        
+        // Remove previous marker if exists
+        if (addressMarker) {
+            addressMarker.setMap(null);
+        }
+        
+        // Add new marker at the address
+        addressMarker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location,
+            title: place.formatted_address || place.name,
+            animation: google.maps.Animation.DROP,
+            icon: {
+                url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                scaledSize: new google.maps.Size(50, 50) // Large enough to see
+            }
+        });
+
+      // Create info window for address marker
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+            <div style="min-width:220px">
+                <strong>${place.formatted_address || place.name}</strong><br>
+                <a href="#" onclick="openDemoPanel('${place.name || 'Selected Location'}',
+                ${place.geometry.location.lat()},
+                ${place.geometry.location.lng()});return false;">
+                Show Demographic Snapshot
+                </a>
+            </div>`
+        });
+        
+        // Show on hover
+        addressMarker.addListener("mouseover", () => {
+            if (activeInfoWindow) activeInfoWindow.close();
+            infoWindow.open(map, addressMarker);
+            activeInfoWindow = infoWindow;
+        });
+        
+        drawRadiusCircles(place.geometry.location);
+    }
+};
+
+    document.getElementById('goButton').addEventListener('click', goToAddress);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') goToAddress();
+    });
+}
+
+
+
+/* =====================
+   RADIUS FUNCTIONS
+===================== */
+function updateRadiusValue(radiusNum, value) {
+    document.getElementById(`radius${radiusNum}-value`).textContent = value + ' mi';
+    
+    // Redraw circles if map center exists
+    const center = map.getCenter();
+    if (center) {
+        drawRadiusCircles(center);
+    }
+}
+
+function drawRadiusCircles(location) {
+    clearRadiusCircles();
+    
+    const radiusColors = {
+        1: { color: '#FF6B6B', name: 'Radius 1' },
+        2: { color: '#4ECDC4', name: 'Radius 2' },
+        3: { color: '#95E1D3', name: 'Radius 3' }
+    };
+    
+    [1, 2, 3].forEach(radiusNum => {
+        const slider = document.getElementById(`radius${radiusNum}`);
+        const radiusValue = parseInt(slider.value);
+        
+        if (radiusValue > 0) {
+            const circle = new google.maps.Circle({
+                strokeColor: radiusColors[radiusNum].color,
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: radiusColors[radiusNum].color,
+                fillOpacity: 0.2,
+                map: map,
+                center: location,
+                radius: radiusValue * 1609.34 // Convert miles to meters
+            });
+            radiusCircles.push(circle);
+        }
+    });
+}
+
+function clearRadiusCircles() {
+    radiusCircles.forEach(circle => circle.setMap(null));
+    radiusCircles = [];
+}
+
+
+
+
+/* =====================
+   ZIP TOGGLE
+===================== */
+let  zipBoundaries = [];
+
+async function handleZipCodeToggle() {
+    const isChecked = document.getElementById('zipcodeCheckbox').checked;
+    
+    if (isChecked) {
+        // Load the JSON file
+        const response = await fetch('files/zipTexas.json');
+        const data = await response.json();
+        
+        // Add each boundary to the map
+        data.features.forEach(feature => {
+            // Convert coordinates to Google Maps format
+            const coords = feature.geometry.coordinates[0].map(coord => ({
+                lng: coord[0],
+                lat: coord[1]
+            }));
+            
+            // Create polygon
+            const polygon = new google.maps.Polygon({
+                paths: coords,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 1,
+                fillColor: '#FF0000',
+                fillOpacity: 0.15,
+                map: map
+            });
+            
+            // Add click handler for info window
+            const infoWindow = new google.maps.InfoWindow();
+            polygon.addListener('click', (e) => {
+                infoWindow.setContent(`
+                    <strong>Block Group:</strong> ${feature.properties.NAMELSAD}<br>
+                    <strong>GEOID:</strong> ${feature.properties.GEOID}
+                `);
+                infoWindow.setPosition(e.latLng);
+                infoWindow.open(map);
+            });
+            
+            zipBoundaries.push(polygon);
+        });
+    } else {
+        // Remove all boundaries from map
+        zipBoundaries.forEach(polygon => polygon.setMap(null));
+        zipBoundaries = [];
+    }
+}
+
+/* =====================
+   URGENT CARES
+===================== */
+function handleUrgentCareToggle() {
+    const checkbox = document.getElementById('urgentCareCheckbox');
+    if (checkbox.checked) {
+        loadUrgentCares();
+    } else {
+        clearUrgentCares();
+    }
+}
+
+
+function loadUrgentCares() {
+    urgentCareMarkers = [];
+    const service = new google.maps.places.PlacesService(map);
+    const request = {
+        location: map.getCenter(),
+        radius: 35000,
+        keyword: 'urgent care'
+    };
+    performSearch(service, request);
+}
+
+function performSearch(service, request) {
+    service.nearbySearch(request, (results, status, pagination) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            results.forEach(createUrgentCareMarker);
+            
+            
+            if (pagination && pagination.hasNextPage) {
+                setTimeout(() => {
+                    pagination.nextPage();
+                }, 2000);
+            }
+        }
+    });
+}
+
+function createUrgentCareMarker(place) {
+    const marker = new google.maps.Marker({
+        map,
+        position: place.geometry.location,
+        title: place.name,
+        icon: {
+            url: 'images/urgentcare.png',  // Relative path
+            scaledSize: new google.maps.Size(88, 88),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(80, 90)
+        }
+    });
+
+    // Get place details for hours and rating
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails({ placeId: place.place_id }, (details, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            //const rating = details.rating || 'N/A';
+            //const openNow = details.opening_hours?.isOpen() ? 'Open Now' : 'Closed';
+            //const hours = details.opening_hours?.weekday_text?.join('<br>') || 'Hours not available';
+            
+            // Parse full address components
+            const street = details.vicinity || details.formatted_address;
+            const city = details.address_components?.find(c => c.types.includes('locality'))?.long_name || '';
+            const state = details.address_components?.find(c => c.types.includes('administrative_area_level_1'))?.short_name || '';
+            const zip = details.address_components?.find(c => c.types.includes('postal_code'))?.long_name || 'N/A';
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                <div style="min-width:220px">
+                    <strong>${place.name}</strong><br>
+                    <div>${street}</div>
+                    <div>${city}, ${state} ${zip}</div>
+                   </div>`
+            });
+                    // <div><strong>Rating:</strong> ${rating} ⭐</div>
+                    // <div><strong>Status:</strong> ${openNow}</div>
+                    //<details style="margin-top:5px">
+                    //    <summary>View Hours</summary>
+                     //   <div style="font-size:11px;margin-top:5px">${hours}</div>
+                    //</details>
+                   
+               // </div>`
+            //});
+
+            marker.addListener("mouseover", () => {
+                if (activeInfoWindow) activeInfoWindow.close();
+                infoWindow.open(map, marker);
+                activeInfoWindow = infoWindow;
+            });
+        }
+    });
+
+    urgentCareMarkers.push(marker);
+}
+
+function clearUrgentCares() {
+    urgentCareMarkers.forEach(m => m.setMap(null));
+    urgentCareMarkers = [];
+    if (activeInfoWindow) activeInfoWindow.close();
+   
+}
+
+function setStatus(message) {
+    document.getElementById('status').textContent = message;
+}
+
+/* =====================
+  HOSPITALS
+===================== */
+// For Hospitals
+function handleHospitalToggle() {
+    const checkbox = document.getElementById('HospitalCheckbox');
+    if (checkbox.checked) {
+        loadHospitals();
+    } else {
+        clearHospitals();
+    }
+}
+
+let hospitalMarkers = [];
+
+function loadHospitals() {
+    const service = new google.maps.places.PlacesService(map);
+    service.nearbySearch(
+        { location: map.getCenter(), radius: 8000, type: "hospital" },
+        (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                results.forEach(createHospitalMarker);
+                setStatus(results.length + " hospitals loaded");
+            }
+        }
+    );
+}
+
+function createHospitalMarker(place) {
+    const marker = new google.maps.Marker({
+        map,
+        position: place.geometry.location,
+        title: place.name,
+        icon: {
+            url: 'images/hosp.png',  // Relative path
+            scaledSize: new google.maps.Size(88, 88),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(80, 90)
+        }
+    });
+    
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails({ placeId: place.place_id }, (details, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+           // const rating = details.rating || 'N/A';
+            //const openNow = details.opening_hours?.isOpen() ? 'Open Now' : 'Closed';
+           const street = details.vicinity || details.formatted_address;
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="min-width:220px">
+                    <strong>${place.name}</strong><br>
+                    <div>${street}</div>
+                    </div>`
+            });
+            
+                  //  <div><strong>Rating:</strong> ${rating} ⭐</div>
+                  //  <div><strong>Status:</strong> ${openNow}</div>
+                //</div>`
+            //});
+            
+            marker.addListener("mouseover", () => {
+                if (activeInfoWindow) activeInfoWindow.close();
+                infoWindow.open(map, marker);
+                activeInfoWindow = infoWindow;
+            });
+        }
+    });
+    
+    hospitalMarkers.push(marker);
+}
+
+function clearHospitals() {
+    hospitalMarkers.forEach(m => m.setMap(null));
+    hospitalMarkers = [];
+    setStatus("Hospitals cleared");
+}
+
+/* =====================
+  Dermatologists
+===================== */
+
+// For Dermatologists
+function handleDermToggle() {
+    const checkbox = document.getElementById('DermCheckbox');
+    if (checkbox.checked) {
+        loadDermatologists();
+    } else {
+        clearDermatologists();
+    }
+}
+
+let dermMarkers = [];
+
+function loadDermatologists() {
+    const service = new google.maps.places.PlacesService(map);
+    service.nearbySearch(
+        { location: map.getCenter(), radius: 8000, keyword: "dermatologist" },
+        (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                results.forEach(createDermMarker);
+                setStatus(results.length + " dermatologists loaded");
+            }
+        }
+    );
+}
+
+
+
+
+function createDermMarker(place) {
+    const marker = new google.maps.Marker({
+        map,
+        position: place.geometry.location,
+        title: place.name,
+                icon: {
+            url: 'images/dermatology.png',  // Relative path
+            scaledSize: new google.maps.Size(88, 88),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(80, 90)
+        }
+    });
+    
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails({ placeId: place.place_id }, (details, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            //const rating = details.rating || 'N/A';
+            //const openNow = details.opening_hours?.isOpen() ? 'Open Now' : 'Closed';
+            const street = details.vicinity || details.formatted_address;
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="min-width:220px">
+                    <strong>${place.name}</strong><br>
+                    <div>${street}</div>
+               </div>`
+            });  
+                    //<div><strong>Rating:</strong> ${rating} ⭐</div>
+                   // <div><strong>Status:</strong> ${openNow}</div>
+                //</div>`
+           // });
+            
+            marker.addListener("mouseover", () => {
+                if (activeInfoWindow) activeInfoWindow.close();
+                infoWindow.open(map, marker);
+                activeInfoWindow = infoWindow;
+            });
+        }
+    });
+    
+    dermMarkers.push(marker);
+}
+
+function clearDermatologists() {
+    dermMarkers.forEach(m => m.setMap(null));
+    dermMarkers = [];
+    setStatus("Dermatologists cleared");
+}
+
+
+
+/* =====================
+  Autism Centers
+===================== */
+
+function handleAutismToggle() {
+    const checkbox = document.getElementById('AutismCheckbox');
+    if (checkbox.checked) {
+        loadAutism();
+    } else {
+        clearAutism();
+    }
+}
+
+let autismMarkers = [];
+
+function loadAutism() {
+    const service = new google.maps.places.PlacesService(map);
+    service.nearbySearch(
+        { location: map.getCenter(), radius: 8000, keyword: "autism center" },
+        (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                results.forEach(createAutismMarker);
+                setStatus(results.length + " dermatologists loaded");
+            }
+        }
+    );
+}
+
+function createAutismMarker(place) {
+    const marker = new google.maps.Marker({
+        map,
+        position: place.geometry.location,
+        title: place.name,
+        icon: {
+            url: 'images/autism.png',  // Relative path
+            scaledSize: new google.maps.Size(88, 88),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(80, 90)
+        }
+    });
+    
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails({ placeId: place.place_id }, (details, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            //const rating = details.rating || 'N/A';
+            //const openNow = details.opening_hours?.isOpen() ? 'Open Now' : 'Closed';
+            const street = details.vicinity || details.formatted_address;
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="min-width:220px">
+                    <strong>${place.name}</strong><br>
+                    <div>${street}</div>
+                   </div>`
+            });
+                   // <div><strong>Rating:</strong> ${rating} ⭐</div>
+                   // <div><strong>Status:</strong> ${openNow}</div>
+              //  </div>`
+           // });
+            
+            marker.addListener("mouseover", () => {
+                if (activeInfoWindow) activeInfoWindow.close();
+                infoWindow.open(map, marker);
+                activeInfoWindow = infoWindow;
+            });
+        }
+    });
+    
+    autismMarkers.push(marker);
+}
+
+function clearAutism() {
+    autismMarkers.push.forEach(m => m.setMap(null));
+    autismMarkers.push = [];
+    setStatus("autism cleared");
+}
+
+
+
+
+
+function openDemographicsPanel() {
+    document.getElementById('demographics-panel').style.display = 'block';
+    document.getElementById('map').classList.add('shrunk');
+    google.maps.event.trigger(map, 'resize');
+}
+
+function closeDemographicsPanel() {
+    document.getElementById('demographics-panel').style.display = 'none';
+    document.getElementById('map').classList.remove('shrunk');
+    google.maps.event.trigger(map, 'resize');
+}
+
+/* =====================
+   CHAT GPT
+===================== */
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    if (input.value.trim()) {
+        messagesDiv.innerHTML += `<div style="margin: 5px 0;"><strong>You:</strong> ${input.value}</div>`;
+        messagesDiv.innerHTML += `<div style="margin: 5px 0; color: #007bff;"><strong>AI:</strong> Feature coming soon...</div>`;
+        input.value = '';
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+}
+
+/* =====================
+   DEMO PANEL
+===================== */
+function openDemoPanel(name, lat, lng) {
+    document.getElementById('demographics-panel').style.display = 'block';
+    document.getElementById('map').classList.add('shrunk');
+    google.maps.event.trigger(map, 'resize');
+
+    document.getElementById("demographics-panel").classList.add("active");
+    document.getElementById("demographics-panel")
+        .scrollIntoView({ behavior: "smooth" });
+	loadDemographics(lat, lng); 
+}
+
+function closeDemographicsPanel() {
+    document.getElementById('demographics-panel').style.display = 'none';
+    document.getElementById('map').classList.remove('shrunk');
+    google.maps.event.trigger(map, 'resize');
+
+    document.getElementById("demographics-panel").classList.remove("active");
+}
+
+function switchTab(evt, tab) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    evt.target.classList.add("active");
+    document.getElementById(tab + "-tab").classList.add("active");
+}
+
+function setStatus(msg) {
+    document.getElementById("status").innerText = "Status: " + msg;
+}
+
+
+
+
+let currentReportData = {};
+/* =====================
+   RUN DEMO REPORT
+===================== */
+
+// /*
+//     const address = await getCurrentAddress();
+//     currentReportData = {
+//         address: address,
+//         population: document.getElementById("pop-total").innerText,
+//         households: document.getElementById("hh-total").innerText,
+//         families: document.getElementById("fam-total").innerText,
+//         zip: document.getElementById("zip-code").innerText
+//     };
+
+//     document.getElementById("report-address").innerText = address;
+//     document.getElementById("report-date").innerText = new Date().toLocaleDateString();
+//     document.getElementById("report-pop").innerText = currentReportData.population;
+//     document.getElementById("report-hh").innerText = currentReportData.households;
+//     document.getElementById("report-fam").innerText = currentReportData.families;
+//     document.getElementById("report-zip").innerText = currentReportData.zip;
+
+//     document.getElementById("report-modal").style.display = "block";
+// }
+// */
+
+
+async function runReport() {
+    const button = document.querySelector('.btn-run-report');
+    button.textContent = 'Generating Report...';
+    button.disabled = true;
+  
+    try {
+        await generateDemographicReport();
+        button.textContent = 'Run Report';
+        button.disabled = false;
+          // Show the modal
+        document.getElementById("report-modal").style.display = "block";
+    } catch (error) {
+        console.error('Report generation failed:', error);
+        button.textContent = 'Run Report';
+        button.disabled = false;
+        alert('Failed to generate report. Please try again.');
+    }
+}
+
+
+
+//
+function closeReport() {
+    document.getElementById("report-modal").style.display = "none";
+}
+
+// Add this to demographic_report_template.html, replacing the existing downloadPDF function
+
+async function downloadPDF() {
+    const button = document.getElementById("download-btn");
+    if (!button) {
+        console.error('Download button not found');
+        return;
+    }
+    
+    button.innerText = "Generating PDF...";
+    button.disabled = true;
+
+    try {
+        // Get all pages from the report
+        const pages = document.querySelectorAll('.page');
+        
+        if (pages.length === 0) {
+            throw new Error('No pages found in report');
+        }
+
+        console.log(`Found ${pages.length} pages to convert to PDF`);
+
+        // Check if html2pdf is available (preferred method)
+        if (typeof html2pdf !== 'undefined') {
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `demographic-report-${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: true,
+                    letterRendering: true,
+                    windowWidth: 1200,
+                    scrollY: -window.scrollY,
+                    scrollX: -window.scrollX
+                },
+                jsPDF: { 
+                    unit: 'in', 
+                    format: 'letter', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { 
+                    mode: ['avoid-all', 'css', 'legacy'],
+                    before: '.page-break',
+                    after: '.page',
+                    avoid: ['table', '.no-break', 'tr', 'img']
+                }
+            };
+
+            // Use document.body to capture everything
+            await html2pdf().set(opt).from(document.body).save();
+            console.log('PDF generated successfully with html2pdf');
+        } else if (typeof jsPDF !== 'undefined' && typeof html2canvas !== 'undefined') {
+            // Fallback to jsPDF + html2canvas
+            await generateMultiPagePDFManual();
+        } else {
+            throw new Error('PDF libraries not loaded. Please use Ctrl+P to print.');
+        }
+        
+        button.innerText = "📥 Download PDF Report";
+        button.disabled = false;
+        
+    } catch (error) {
+        console.error("PDF generation error:", error);
+        alert("Error generating PDF: " + error.message + "\n\nAlternative: Press Ctrl+P (or Cmd+P on Mac) and select 'Save as PDF'");
+        if (button) {
+            button.innerText = "📥 Download PDF Report";
+            button.disabled = false;
+        }
+    }
+}
+
+// Manual multi-page PDF generation using jsPDF + html2canvas
+async function generateMultiPagePDFManual() {
+    console.log('Using manual jsPDF generation...');
+    
+    const { jsPDF } = window.jspdf || window;
+    if (!jsPDF) {
+        throw new Error('jsPDF not available');
+    }
+
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'letter'
+    });
+
+    const pageWidth = 612;  // 8.5 inches in points
+    const pageHeight = 792; // 11 inches in points
+    const margin = 36;      // 0.5 inch margins
+    
+    const pages = document.querySelectorAll('.page');
+    
+    for (let i = 0; i < pages.length; i++) {
+        console.log(`Processing page ${i + 1} of ${pages.length}...`);
+        
+        if (i > 0) {
+            pdf.addPage();
+        }
+        
+        // Render each page individually
+        const canvas = await html2canvas(pages[i], {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: pageWidth - (margin * 2),
+            windowWidth: pageWidth - (margin * 2),
+            scrollY: 0,
+            scrollX: 0
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Fit to page
+        const finalHeight = Math.min(imgHeight, pageHeight - (margin * 2));
+        pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, finalHeight);
+    }
+    
+    pdf.save(`demographic-report-${new Date().toISOString().slice(0,10)}.pdf`);
+    console.log('Manual PDF generation complete');
+}
+
+/* =====================
+   DEMOGRAPHICS FETCH
+===================== */
+async function loadDemographics(lat, lng) {
+    document.getElementById("demographics-panel").classList.add("active");
+
+    const geoRes = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${CONFIG.GOOGLE_MAPS_API_KEY}`
+    );
+    const geoData = await geoRes.json();
+
+    const zipComponent = geoData.results
+        .flatMap(r => r.address_components)
+        .find(c => c.types.includes("postal_code"));
+
+    if (!zipComponent) {
+        console.error("ZIP not found");
+        return;
+    }
+
+    const zip = zipComponent.long_name;
+    document.getElementById("zip-code").innerText = zip;
+
+    const url = `https://api.census.gov/data/2023/acs/acs5?get=NAME,B01003_001E,B11001_001E,B11001_002E&for=zip%20code%20tabulation%20area:${zip}&key=${CONFIG.CENSUS_API_KEY}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data || data.length < 2) {
+            console.error("No ACS data", data);
+            return;
+        }
+
+        const [population, households, families] = [data[1][1], data[1][2], data[1][3]];
+
+        document.getElementById("pop-total").innerText = Number(population).toLocaleString();
+        document.getElementById("hh-total").innerText = Number(households).toLocaleString();
+        document.getElementById("fam-total").innerText = Number(families).toLocaleString();
+    } catch (error) {
+        console.error("Census API error:", error);
+    }
+}
+
+</script>
+
+
+<!-- Report Modal with iframe -->
+<div id="report-modal">
+    <div style="position: relative; background-color: #fefefe; margin: 2% auto; padding: 0; width: 95%; max-width: 1400px; height: 90vh; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-radius: 8px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #1f2933; color: white; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0; font-size: 20px; border: none; padding: 0; color: white;">Demographic Analysis Report</h2>
+            <button class="close-report" onclick="closeReport()">Close</button>
+        </div>
+        <!-- <iframe id="demographicReport" src="demographic_report_template.html" style="width: 100%; height: 100%; border: none; flex: 1;"></iframe> -->
+        <iframe id="report-iframe" src="demographic_report_template.html"     style="width: 100%; height: 800px; border: none;"></iframe>
+    </div>
+</div>
+
+<!-- 3. Config.js -->
+<script src="config.js"></script>
+
+<!-- 4. Report integration -->
+<script src="report_integration.js"></script>
+
+<!-- 5. Google Maps LAST (with callback) -->
+
+
+</body>
+</html>
