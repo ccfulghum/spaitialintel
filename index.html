@@ -66,16 +66,7 @@
     </nav>
 </header>
 
-<!-- Login Modal -->
-<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
-  <div style="background:white; padding:30px; border-radius:8px; width:300px;">
-    <h3>Login Required</h3>
-    <input id="username" type="text" placeholder="Username" style="width:100%; margin-bottom:10px;">
-    <input id="password" type="password" placeholder="Password" style="width:100%; margin-bottom:10px;">
-    <button id="runReportBtn">Run Report</button>
-    <p id="loginError" style="color:red; display:none;">Invalid credentials</p>
-  </div>
-</div>
+
 
 <!-- ── Hero ── -->
 <section class="hero">
@@ -336,6 +327,46 @@
         </span>
     </div>
 </footer>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+">
+  <div style="
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    width:320px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  ">
+    <h3 style="margin-top:0;">Secure Access</h3>
+
+    <input id="username" type="text" placeholder="Username"
+      style="width:100%; padding:8px; margin-bottom:10px;">
+
+    <input id="password" type="password" placeholder="Password"
+      style="width:100%; padding:8px; margin-bottom:10px;">
+
+    <button id="submitLogin"
+      style="width:100%; padding:10px; cursor:pointer;">
+      Login
+    </button>
+
+    <p id="loginError" style="
+      color:red;
+      display:none;
+      margin-top:10px;
+      font-size:14px;">
+      Invalid credentials
+    </p>
+  </div>
+</div>
 
 </body>
 </html>
