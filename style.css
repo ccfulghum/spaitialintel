@@ -96,7 +96,7 @@ nav a:hover {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.55); /* increase for darker overlay */
+    background-color: rgba(0, 0, 0, 0.65); /* increase for darker overlay */
     z-index: 1;
 }
 
