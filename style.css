@@ -5,6 +5,28 @@
     max-width: 100%;
 }
 
+/* Fix 1 — constrain horizontal overflow at the root level */
+html {
+    overflow-x: hidden;
+}
+
+
+
+/* Fix 3 — stop navbar from pushing the button off-screen */
+.navbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-right: 12px;
+}
+
+/* Fix 4 — shrink login button on tight viewports */
+@media (max-width: 480px) {
+    .login-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+}
+
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
     scroll-behavior: smooth;
@@ -298,13 +320,16 @@ header {
 
 @media (max-width: 600px) {
     header {
-        padding: 10px 4%;
+        padding: 12px 4%;
         justify-content: space-between;
+        max-width: 100vw;
+        overflow: hidden;
     }
 
-    .navbar {
-        gap: 8px;
-        margin-right: 10px;
+    .navbar{
+        gap: 12px;
+        margin-right: 12px;
+        flex-wrap: wrap;
     }
 
     .dropbtn {
