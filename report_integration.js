@@ -23,12 +23,55 @@ let acsPctDataByGeoid = null;
 
 // script.js (frontend)
 
+
+
+function buildEndpointCandidates(paths) {
+  const candidates = [];
+  const basePath = window.location.pathname.replace(/[^/]+$/, '/');
+
+  for (const path of paths) {
+    const normalized = path.replace(/^\/+/, '');
+    candidates.push('/' + normalized);
+    candidates.push(basePath + normalized);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function getGoogleMapsApiKey() {
+  if (typeof runtimeConfig !== 'undefined' && runtimeConfig?.GOOGLE_MAPS_API_KEY) {
+    return runtimeConfig.GOOGLE_MAPS_API_KEY;
+  }
+  throw new Error('Google Maps API key is unavailable. Ensure Cloudflare login function returns googleMapsApiKey.');
+}
+
 async function generateReport(data) {
-  const response = await fetch("/api/report", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  const endpoints = buildEndpointCandidates(["api/report", "report"]);
+  let response = null;
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const candidate = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (candidate.ok) {
+        response = candidate;
+        break;
+      }
+
+      lastError = new Error(`Report API request failed with status ${candidate.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!response) {
+    throw lastError || new Error("Report API request failed");
+  }
 
   const report = await response.json();
   console.log(report);
@@ -527,7 +570,7 @@ async function getCurrentAddress() {
         // Use coordinates from map center instead of ZIP for better results
         const center = map.getCenter();
         const res = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${center.lat()},${center.lng()}&key=${CONFIG.GOOGLE_MAPS_API_KEY}`
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${center.lat()},${center.lng()}&key=${getGoogleMapsApiKey()}`
         );
         const data = await res.json();
         
@@ -866,7 +909,7 @@ async function generateMapSnapshot(center) {
     const zoom = map.getZoom();
     const size = '800x400';
     
-    const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat()},${center.lng()}&zoom=${zoom}&size=${size}&markers=color:red|${center.lat()},${center.lng()}&key=${CONFIG.GOOGLE_MAPS_API_KEY}`;
+    const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat()},${center.lng()}&zoom=${zoom}&size=${size}&markers=color:red|${center.lat()},${center.lng()}&key=${getGoogleMapsApiKey()}`;
     
     return imageUrl; // Direct image URL, no rendering needed
 }
