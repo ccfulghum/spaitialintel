@@ -1,43 +1,41 @@
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+// ===== LOGIN LOGIC =====
 
-  const sampleReportsBtn = document.getElementById("sampleReportsBtn");
-  const loginModal = document.getElementById("loginModal");
-  const submitLogin = document.getElementById("submitLogin");
+const runReportBtn = document.getElementById("runReportBtn");
+const loginModal = document.getElementById("loginModal");
+const submitLogin = document.getElementById("submitLogin");
 
-  if (sampleReportsBtn) {
-    sampleReportsBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      loginModal.style.display = "flex";
-    });
-  }
-
-  if (submitLogin) {
-    submitLogin.addEventListener("click", async function () {
-
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (response.status === 401) {
-        document.getElementById("loginError").style.display = "block";
-        return;
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        window.location.href = "/demo_report_map.html";
-      } else {
-        document.getElementById("loginError").style.display = "block";
-      }
-    });
-  }
-
+runReportBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  loginModal.style.display = "flex";
 });
-</script>
+
+submitLogin.addEventListener("click", async () => {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (response.status === 401) {
+      document.getElementById("loginError").style.display = "block";
+      return;
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      window.location.href = "demo_report_map.html";
+    } else {
+      document.getElementById("loginError").style.display = "block";
+    }
+
+  } catch (error) {
+    console.error("Login error:", error);
+  }
+});
