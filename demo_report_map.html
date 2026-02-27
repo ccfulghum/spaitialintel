@@ -8,7 +8,18 @@
 
     <!-- 1. Turf.js FIRST -->
     <script src='https://unpkg.com/@turf/turf@7/turf.min.js'></script>
-
+    <script src='https://unpkg.com/@turf/turf@7/turf.min.js'></script>
+        <script>
+        // Wait for config to be available
+        window.addEventListener('DOMContentLoaded', () => {
+            const s = document.createElement("script");
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+            s.async = true;
+            s.defer = true;
+            document.head.appendChild(s);
+        });
+    </script>
+    
     <!-- 2. Other libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -50,6 +61,7 @@ header .logo {
     font-weight: bold;
     font-size: 18px;
 }
+
 
 
 /* =====================
