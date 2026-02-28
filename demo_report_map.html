@@ -1419,7 +1419,8 @@ function switchTab(evt, tab) {
 }
 
 function setStatus(msg) {
-    document.getElementById("status").innerText = "Status: " + msg;
+    const details = runtimeConfigDebug.length ? ` | Attempts: ${runtimeConfigDebug.join(' ; ')}` : '';
+    document.getElementById("status").innerText = "Status: " + msg + details;
 }
 
 
