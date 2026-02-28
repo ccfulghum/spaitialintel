@@ -708,6 +708,99 @@ input[type="range"]::-moz-range-thumb {
 
 <script>
 
+
+let runtimeConfig = {
+    GOOGLE_MAPS_API_KEY: '',
+    CENSUS_API_KEY: ''
+};
+
+function buildEndpointCandidates(paths) {
+    const candidates = [];
+    const basePath = window.location.pathname.replace(/[^/]+$/, '');
+
+    for (const path of paths) {
+        const normalized = path.replace(/^\/+/, '');
+        candidates.push('/' + normalized);
+        candidates.push(basePath + normalized);
+    }
+
+    return [...new Set(candidates)];
+}
+
+async function loadRuntimeConfig() {
+    const configEndpoints = buildEndpointCandidates(['api/login', 'login']);
+    let lastStatus = 'unknown';
+
+    for (const endpoint of configEndpoints) {
+        try {
+            const candidate = await fetch(endpoint, { method: 'GET' });
+
+            if (!candidate.ok) {
+                lastStatus = `${endpoint} -> ${candidate.status}`;
+                continue;
+            }
+
+            const contentType = candidate.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                lastStatus = `${endpoint} -> unexpected content type (${contentType || 'none'})`;
+                continue;
+            }
+
+            const config = await candidate.json();
+            const googleMapsApiKey = config.googleMapsApiKey || '';
+            const censusApiKey = config.censusApiKey || '';
+
+            if (!googleMapsApiKey) {
+                lastStatus = `${endpoint} -> missing googleMapsApiKey`;
+                continue;
+            }
+
+            runtimeConfig = {
+                GOOGLE_MAPS_API_KEY: googleMapsApiKey,
+                CENSUS_API_KEY: censusApiKey
+            };
+            return;
+        } catch (error) {
+            lastStatus = `${endpoint} -> ${error.message}`;
+        }
+    }
+
+    throw new Error(`Failed to load runtime config from Cloudflare function (${lastStatus})`);
+}
+
+function loadGoogleMapsScript() {
+    return new Promise((resolve, reject) => {
+        const existingScript = document.querySelector('script[data-google-maps="true"]');
+        if (existingScript) {
+            resolve();
+            return;
+        }
+
+        window.initMap = () => {
+            initMap();
+            resolve();
+        };
+
+        const script = document.createElement('script');
+        script.dataset.googleMaps = 'true';
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+        document.head.appendChild(script);
+    });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await loadRuntimeConfig();
+        await loadGoogleMapsScript();
+    } catch (error) {
+        console.error(error);
+        setStatus(`Error: ${error.message}`);
+    }
+});
+
 /* =====================
   GLOBAL VARIABLES
 ===================== */
@@ -727,8 +820,8 @@ let addressMarker = null;
 ===================== */
 function initMap() {
     // Check CONFIG after it's loaded
-    if (!CONFIG?.CENSUS_API_KEY) {
-        console.error("CENSUS_API_KEY missing from config.js");
+    if (!runtimeConfig?.CENSUS_API_KEY) {
+        console.error("CENSUS_API_KEY missing from Cloudflare environment variables");
     }
     
     map = new google.maps.Map(document.getElementById("map"), {
@@ -1518,7 +1611,7 @@ async function loadDemographics(lat, lng) {
     document.getElementById("demographics-panel").classList.add("active");
 
     const geoRes = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${CONFIG.GOOGLE_MAPS_API_KEY}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${runtimeConfig.GOOGLE_MAPS_API_KEY}`
     );
     const geoData = await geoRes.json();
 
@@ -1534,7 +1627,7 @@ async function loadDemographics(lat, lng) {
     const zip = zipComponent.long_name;
     document.getElementById("zip-code").innerText = zip;
 
-    const url = `https://api.census.gov/data/2023/acs/acs5?get=NAME,B01003_001E,B11001_001E,B11001_002E&for=zip%20code%20tabulation%20area:${zip}&key=${CONFIG.CENSUS_API_KEY}`;
+    const url = `https://api.census.gov/data/2023/acs/acs5?get=NAME,B01003_001E,B11001_001E,B11001_002E&for=zip%20code%20tabulation%20area:${zip}&key=${runtimeConfig.CENSUS_API_KEY}`;
 
     try {
         const res = await fetch(url);
@@ -1570,13 +1663,10 @@ async function loadDemographics(lat, lng) {
     </div>
 </div>
 
-<!-- 3. Config.js -->
-<script src="config.js"></script>
-
-<!-- 4. Report integration -->
+<!-- 3. Report integration -->
 <script src="report_integration.js"></script>
 
-<!-- 5. Google Maps LAST (with callback) -->
+
 
 
 </body>
